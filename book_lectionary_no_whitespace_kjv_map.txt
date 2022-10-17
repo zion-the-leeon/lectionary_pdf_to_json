@@ -1,0 +1,82 @@
+Revelation: Revelation
+Jude: Jude
+3John: 3 John
+2John: 2 John
+1John: 1 John
+2Peter: 2 Peter
+1Peter: 1 Peter
+James: James
+Hebrews: Hebrews
+Philemon: Philemon
+Titus: Titus
+2Timothy: 2 Timothy
+1Timothy: 1 Timothy
+2Thessalonians: 2 Thessalonians
+1Thessalonians: 1 Thessalonians
+Colossians: Colossians
+Philippians: Philippians
+Ephesians: Ephesians
+Galatians: Galatians
+2Corinthians: 2 Corinthians
+1Corinthians: 1 Corinthians
+Romans: Romans
+Acts: Acts of the Apostles
+John: John
+Luke: Luke
+Mark: Mark
+Matthew: Matthew
+2Maccabees: 2 Maccabees
+1Maccabees: 1 Maccabees
+PrayerofManasses: Prayer of Manasses
+TheIdolBelandtheDragon: The Idol Bel and the Dragon
+StoryofSusanna: Story of Susanna
+SongoftheThreeYoungMen: Song of the Three Young Men
+Baruch: Baruch
+Sirach: Sirach
+Wisdom: Wisdom
+RestofEsther: Rest of Esther
+Judith: Judith
+Tobit: Tobit
+2Esdras: 2 Esdras
+1Esdras: 1 Esdras
+Malachi: Malachi
+Zechariah: Zechariah
+Haggai: Haggai
+Zephaniah: Zephaniah
+Habakkuk: Habakkuk
+Nahum: Nahum
+Micah: Micah
+Jonah: Jonah
+Obadiah: Obadiah
+Amos: Amos
+Joel: Joel
+Hosea: Hosea
+Daniel: Daniel
+Ezekiel: Ezekiel
+Lamentations: Lamentations
+Jeremiah: Jeremiah
+Isaiah: Isaiah
+SongofSolomon: Song of Solomon
+Ecclesiastes: Ecclesiastes
+Proverbs: Proverbs
+Psalms: Psalms
+Psalm: Psalms
+Job: Job
+Esther: Esther
+Nehemiah: Nehemiah
+Ezra: Ezra
+2Chronicles: 2 Chronicles
+1Chronicles: 1 Chronicles
+2Kings: 2 Kings
+1Kings: 1 Kings
+2Samuel: 2 Samuel
+1Samuel: 1 Samuel
+Samuel: 1 Samuel
+Ruth: Ruth
+Judges: Judges
+Joshua: Joshua
+Deuteronomy: Deuteronomy
+Numbers: Numbers
+Leviticus: Leviticus
+Exodus: Exodus
+Genesis: Genesis
