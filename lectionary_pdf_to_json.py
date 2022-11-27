@@ -35,9 +35,17 @@ class PdfFile:
 import os
 SCRIPT_FOLDERPATH = os.path.dirname(os.path.realpath(__file__))
 
-PDF_SOURCE_FILEPATH = os.path.join(SCRIPT_FOLDERPATH, 'YearC_21-22_ALL.pdf')
+PDF_SOURCE_FILENAME = 'YearA_2022.pdf' # 'YearC_21-22_ALL.pdf'
+PDF_SOURCE_FILEPATH = os.path.join(SCRIPT_FOLDERPATH, PDF_SOURCE_FILENAME)
 PDF_SOURCE_FILE = PdfFile(input_filepath=PDF_SOURCE_FILEPATH)
 PDF_SOURCE_FILE_TEXT_NO_NEWLINE = PDF_SOURCE_FILE.get_full_text_no_newline()
+
+if PDF_SOURCE_FILENAME in ['YearA_ALL_22-23.pdf', 'YearA_2022.pdf']:
+    # fix typos in this source - disabled since it seems that currently this lectionary contains a lot of typos with dates mismatching
+    ERROR_CORRECTION_MAP = {'Febrews': 'Hebrews'}
+    for error in ERROR_CORRECTION_MAP.keys():
+        correction = ERROR_CORRECTION_MAP[error]
+        PDF_SOURCE_FILE_TEXT_NO_NEWLINE = PDF_SOURCE_FILE_TEXT_NO_NEWLINE.replace(error, correction)
 
 # Phase 2: Extract date and date contents from PDF file text
 import datetime
@@ -61,7 +69,7 @@ def convert_date_to_re_pattern(input_date):
     """Convert a given date to the date's respective regex pattern"""
     month = input_date.month
     day = input_date.day
-    calendar_day_abbr_whitespace_list = ['\s*'.join(day_abbr) for day_abbr in calendar.day_abbr]
+    calendar_day_abbr_whitespace_list = ['\s*'.join(day_abbr) for day_abbr in calendar.day_abbr] + ['\s*'.join(day_name) for day_name in calendar.day_name]
     calendar_day_abbr_re_pattern_group = '({})'.format('|'.join(calendar_day_abbr_whitespace_list))
     month_abbr_name_re_pattern_group = get_month_abbr_name_re_pattern_group(month)
     day_re_pattern_group = get_day_re_pattern_group(day)
@@ -135,7 +143,7 @@ def process_phase_2b(input_dict, input_date_str, input_in_memory_date, input_in_
 
 def process_phase_2_to_4(input_str):
     """Custom function to run phase 2, 3 and 4 of the PDF scrapping"""
-    date = datetime.date(2021, 11, 25)
+    date = datetime.date(2022, 11, 24)
     in_memory_date = None
     in_memory_content = None
     output_dict = {}
@@ -348,68 +356,57 @@ class TxtFile:
             bible_book_whitespace_list.append('\s'.join(bible_book_word_whitespace_list))
         return '|'.join(bible_book_whitespace_list)
 
-    def get_book_lectionary_no_whitespace_kjv_dict(self):
-        """Gets a dictionary mapping the books of the Bible in the lectionary (without spaces) to that of the KJV bible"""
-        bible_map_list = self.get_line_list_no_empty()
-        output_dict = {}
-        for bible_map in bible_map_list:
-            bible_map_match = re.search('(\S+): (.+)$', bible_map)
-            output_dict[bible_map_match.group(1)] = bible_map_match.group(2)
-        return output_dict
-
     def get_easter_vigil_reading_parts_re_pattern(self):
         """Gets the regex pattern to match a reading part for the Vigil of Easter"""
         reading_part_list = [remove_char(reading_part, ' ') for reading_part in self.get_line_list_no_empty()]
         reading_part_whitespace_list = ['\s*'.join(reading_part) for reading_part in reading_part_list]
         return '|'.join(reading_part_whitespace_list)
 
+    def get_bible_bookname_no_whitespace_niv_map(self):
+        """Gets the dictionary mapping the a bookname of the Bible with no whitespace to the bookname in NIV"""
+        output_dict = {}
+        bible_bookname_row_list = self.get_line_list_no_empty()
+        for bible_bookname_row in bible_bookname_row_list:
+            bible_bookname_match = re.search('\|([^|]+)\|([^|]+)\|[^|]+\|', bible_bookname_row)
+            bookname_no_whitespace = bible_bookname_match.group(1)
+            bookname_niv = bible_bookname_match.group(2)
+            output_dict[bookname_no_whitespace] = bookname_niv
+        return output_dict
+
+    def get_bible_bookname_no_whitespace_esv_map(self):
+        """Gets the dictionary mapping the a bookname of the Bible with no whitespace to the bookname in ESV"""
+        output_dict = {}
+        bible_bookname_row_list = self.get_line_list_no_empty()
+        for bible_bookname_row in bible_bookname_row_list:
+            bible_bookname_match = re.search('\|([^|]+)\|[^|]+\|([^|]+)\|', bible_bookname_row)
+            bookname_no_whitespace = bible_bookname_match.group(1)
+            bookname_esv = bible_bookname_match.group(2)
+            output_dict[bookname_no_whitespace] = bookname_esv
+        return output_dict
+
 TXT1_SOURCE_FILEPATH = os.path.join(SCRIPT_FOLDERPATH, 'books_of_the_bible.txt')
 TXT1_SOURCE_FILE = TxtFile(input_filepath=TXT1_SOURCE_FILEPATH)
 BIBLE_BOOK_RE_PATTERN = TXT1_SOURCE_FILE.get_bible_book_re_pattern()
 
-TXT2_SOURCE_FILEPATH = os.path.join(SCRIPT_FOLDERPATH, 'book_lectionary_no_whitespace_kjv_map.txt')
-TXT2_SOURCE_FILE = TxtFile(input_filepath=TXT2_SOURCE_FILEPATH)
-BIBLE_BOOK_NWS_KJV_DICT = TXT2_SOURCE_FILE.get_book_lectionary_no_whitespace_kjv_dict()
+# TXT2_SOURCE_FILEPATH: 'book_lectionary_no_whitespace_kjv_map.txt' removed on Advent 2022 to use NIV/ESV and to save space
 
 TXT3_SOURCE_FILEPATH = os.path.join(SCRIPT_FOLDERPATH, 'easter_vigil_reading_parts.txt')
 TXT3_SOURCE_FILE = TxtFile(input_filepath=TXT3_SOURCE_FILEPATH)
 EV_READING_PART_RE_PATTERN = TXT3_SOURCE_FILE.get_easter_vigil_reading_parts_re_pattern()
 
+TXT4_SOURCE_FILEPATH = os.path.join(SCRIPT_FOLDERPATH, 'lectionary_no_whitespace_niv_esv_map.txt')
+TXT4_SOURCE_FILE = TxtFile(input_filepath=TXT4_SOURCE_FILEPATH)
+BIBLE_BOOKNAME_NWS_NIV_MAP = TXT4_SOURCE_FILE.get_bible_bookname_no_whitespace_niv_map()
+BIBLE_BOOKNAME_NWS_ESV_MAP = TXT4_SOURCE_FILE.get_bible_bookname_no_whitespace_esv_map()
+
 # Phase 7: Extract JSON file for the verses in the Bible
-class JsonFile:
-    """Custom class for JSON file"""
-    def __init__(self, input_filepath):
-        self.object = open(input_filepath, 'r')
-
-    def get_book_to_verse_list_dict(self):
-        """Get the dictionary mapping the Bible books and the list of verses"""
-        verse_re_pattern = '"chapter":(\d+),"verse":(\d+),"text":"([^"]+)".+"book_name":"([^"]+)"'
-        verse_re_compile = re.compile(verse_re_pattern)
-        output_dict = {}
-        for line in self.object.readlines():
-            verse_re_match = verse_re_compile.search(line)
-            chapter = int(verse_re_match.group(1))
-            verse_number = int(verse_re_match.group(2))
-            text, book_name = verse_re_match.group(3, 4)
-            if chapter * verse_number == 1:
-                output_dict[book_name] = []
-            if verse_number == 1:
-                output_dict[book_name] += [[]]
-            output_dict[book_name][chapter - 1].append(text)
-            assert len(output_dict[book_name]) == chapter
-            assert len(output_dict[book_name][chapter - 1]) == verse_number
-        return output_dict
-
-JSON_SOURCE_FILEPATH = os.path.join(SCRIPT_FOLDERPATH, 'kjv.json')
-JSON_SOURCE_FILE = JsonFile(input_filepath=JSON_SOURCE_FILEPATH)
-BIBLE_DICT = JSON_SOURCE_FILE.get_book_to_verse_list_dict()
+# Removed on Advent 2022 because output will be too bulky, will use links instead
 
 class Readings:
     """Custom class for the lectionary item readings"""
     def __init__(self, input_str):
         self.input_str = input_str
         self.book_list, self.chapter_verse_str_list = self.get_book_chapter_verse_str_lists()
-        self.content_list = self.get_content_list()
 
     def get_book_chapter_verse_str_lists(self):
         """Get a list of Bible books and a list of chapters and verses from the input string"""
@@ -424,80 +421,20 @@ class Readings:
         for index in range(len(self.book_list)):
             book = self.book_list[index]
             book_no_whitespace = book.replace(' ', '')
-            input_book = BIBLE_BOOK_NWS_KJV_DICT[book_no_whitespace]
             chapter_verse_str = self.chapter_verse_str_list[index]
             chapter_verse_str_no_brackets = re.sub('[(][^)]*[)]|[{][^}]*[}]|\[[^\]]*\]', ' ', chapter_verse_str)
             chapter_verse_str_and_split = re.sub('and', ';', chapter_verse_str_no_brackets)
             chapter_verse_str_unstrip = re.sub('[A-Za-z]|(?<=[^\w\s])\s+|\s+(?=[^\w\s])', '', chapter_verse_str_and_split)
             chapter_verse_str_clean = re.sub('^\W+(?=\w)|(?<=\w)\W+$|^\W*$', '', chapter_verse_str_unstrip)
             chapter_verse_list = re.split(',|;|\s+', chapter_verse_str_clean)
-            if input_book in BIBLE_DICT.keys():
-                output_str_list = []
-                book_chapter_list = BIBLE_DICT[input_book]
-                if len(book_chapter_list) == 1:
-                    chapter = 1
-                else:
-                    chapter = -1
-                for chapter_verse in chapter_verse_list:
-                    chapter_verse_range_match = re.search('([\w:]+)[^\w:]+([\w:]+)', chapter_verse)
-                    chapter_verse_match = re.search('(\d+):(.+)', chapter_verse)
-                    if chapter_verse_range_match:
-                        chapter_list = []
-                        verse_list = []
-                        for chapter_verse_range_point in chapter_verse_range_match.groups():
-                            chapter_verse_match = re.search('(\d+):(.+)', chapter_verse_range_point)
-                            if chapter_verse_match:
-                                chapter = int(chapter_verse_match.group(1))
-                                verse = int(chapter_verse_match.group(2))
-                                chapter_list.append(chapter)
-                                verse_list.append(verse)
-                            else:
-                                verse = int(chapter_verse_range_point)
-                                chapter_list.append(chapter)
-                                verse_list.append(verse)
-                        chapter_start, chapter_end = chapter_list
-                        verse_start, verse_end = verse_list
-                    elif chapter_verse_match:
-                        chapter = int(chapter_verse_match.group(1))
-                        chapter_start = chapter
-                        chapter_end = chapter
-                        verse_range_match = re.search('(\d+)\W+(\d+)', chapter_verse_match.group(2))
-                        if verse_range_match:
-                            verse_start = int(verse_range_match.group(1))
-                            verse_end = int(verse_range_match.group(2))
-                        else:
-                            verse = int(chapter_verse_match.group(2))
-                            verse_start = verse
-                            verse_end = verse
-                    elif re.search('^\d+$', chapter_verse):
-                        if chapter == -1:
-                            chapter = int(chapter_verse)
-                            chapter_start = chapter
-                            chapter_end = chapter
-                            verse_start = 1
-                            verse_end = len(book_chapter_list[chapter - 1])
-                        else:
-                            verse = int(chapter_verse)
-                            verse_start = verse
-                            verse_end = verse
-                    for chapter in range(chapter_start, chapter_end + 1):
-                        chapter_content_list = []
-                        if chapter == chapter_start:
-                            chapter_verse_start = verse_start
-                        else:
-                            chapter_verse_start = 1
-                        if chapter == chapter_end:
-                            chapter_verse_end = verse_end
-                        else:
-                            chapter_verse_end = len(book_chapter_list[chapter - 1])
-                        for verse in range(chapter_verse_start, chapter_verse_end + 1):
-                            if verse - 1 in range(len(book_chapter_list[chapter - 1])):
-                                chapter_content_list.append('({}) {}'.format(verse, book_chapter_list[chapter - 1][verse - 1]))
-                        output_str_list.append(' '.join(chapter_content_list))
-                    if 'and' in chapter_verse_str_no_brackets:
-                        chapter = -1
-                output_str = '\n\n'.join(output_str_list)
-                output_list.append(output_str)
+            if book_no_whitespace in BIBLE_BOOKNAME_NWS_NIV_MAP.keys():
+                niv_bookname = BIBLE_BOOKNAME_NWS_NIV_MAP[book_no_whitespace]
+                niv_url_bookname = niv_bookname.replace(' ', '+')
+                niv_url = 'https://www.biblegateway.com/passage/?search={}+{}&version=NIV'.format(niv_url_bookname, chapter_verse_str_clean)
+                esv_bookname = BIBLE_BOOKNAME_NWS_ESV_MAP[book_no_whitespace]
+                esv_url_bookname = esv_bookname.replace(' ', '+')
+                esv_url = 'https://www.esv.org/verses/{}+{}/'.format(esv_url_bookname, chapter_verse_str_clean)
+                output_list.append('<p>Text: <a href="{}">New International Version (NIV)</a> . <a href="{}">English Standard Version (ESV)</a></p>'.format(niv_url, esv_url))
             else:
                 output_str = 'This reading is not supported..'
                 output_list.append(output_str)
@@ -507,82 +444,30 @@ class Readings:
         """Get a list of contents from the list of chapters and verses"""
         output_list = []
         for index in range(len(self.book_list)):
+            chapter_verse_str_pattern_repl_map = {
+                '[(][^)]*[)]|[{][^}]*[}]|\[[^\]]*\]': ' ',
+                'and': ';',
+                '[A-Za-z]|(?<=[^\w\s])\s+|\s+(?=[^\w\s])': '',
+                '^\W+(?=\w)|(?<=\w)\W+$|^\W*$': '',
+                '\s+': ';',
+                '[^\w:-;,]': '-',
+            }
             book = self.book_list[index]
             book_no_whitespace = book.replace(' ', '')
-            input_book = BIBLE_BOOK_NWS_KJV_DICT[book_no_whitespace]
             chapter_verse_str = self.chapter_verse_str_list[index]
-            chapter_verse_str_no_brackets = re.sub('[(][^)]*[)]|[{][^}]*[}]|\[[^\]]*\]', ' ', chapter_verse_str)
-            chapter_verse_str_and_split = re.sub('and', ';', chapter_verse_str_no_brackets)
-            chapter_verse_str_unstrip = re.sub('[A-Za-z]|(?<=[^\w\s])\s+|\s+(?=[^\w\s])', '', chapter_verse_str_and_split)
-            chapter_verse_str_clean = re.sub('^\W+(?=\w)|(?<=\w)\W+$|^\W*$', '', chapter_verse_str_unstrip)
+            chapter_verse_str_clean = chapter_verse_str
+            for chapter_verse_str_pattern in chapter_verse_str_pattern_repl_map.keys():
+                chapter_verse_str_repl = chapter_verse_str_pattern_repl_map[chapter_verse_str_pattern]
+                chapter_verse_str_clean = re.sub(chapter_verse_str_pattern, chapter_verse_str_repl, chapter_verse_str_clean)
             chapter_verse_list = re.split(',|;|\s+', chapter_verse_str_clean)
-            if input_book in BIBLE_DICT.keys():
-                output_str_list = []
-                book_chapter_list = BIBLE_DICT[input_book]
-                if len(book_chapter_list) == 1:
-                    chapter = 1
-                else:
-                    chapter = -1
-                for chapter_verse in chapter_verse_list:
-                    chapter_verse_range_match = re.search('([\w:]+)[^\w:]+([\w:]+)', chapter_verse)
-                    chapter_verse_match = re.search('(\d+):(.+)', chapter_verse)
-                    if chapter_verse_range_match:
-                        chapter_list = []
-                        verse_list = []
-                        for chapter_verse_range_point in chapter_verse_range_match.groups():
-                            chapter_verse_match = re.search('(\d+):(.+)', chapter_verse_range_point)
-                            if chapter_verse_match:
-                                chapter = int(chapter_verse_match.group(1))
-                                verse = int(chapter_verse_match.group(2))
-                                chapter_list.append(chapter)
-                                verse_list.append(verse)
-                            else:
-                                verse = int(chapter_verse_range_point)
-                                chapter_list.append(chapter)
-                                verse_list.append(verse)
-                        chapter_start, chapter_end = chapter_list
-                        verse_start, verse_end = verse_list
-                    elif chapter_verse_match:
-                        chapter = int(chapter_verse_match.group(1))
-                        chapter_start = chapter
-                        chapter_end = chapter
-                        verse_range_match = re.search('(\d+)\W+(\d+)', chapter_verse_match.group(2))
-                        if verse_range_match:
-                            verse_start = int(verse_range_match.group(1))
-                            verse_end = int(verse_range_match.group(2))
-                        else:
-                            verse = int(chapter_verse_match.group(2))
-                            verse_start = verse
-                            verse_end = verse
-                    elif re.search('^\d+$', chapter_verse):
-                        if chapter == -1:
-                            chapter = int(chapter_verse)
-                            chapter_start = chapter
-                            chapter_end = chapter
-                            verse_start = 1
-                            verse_end = len(book_chapter_list[chapter - 1])
-                        else:
-                            verse = int(chapter_verse)
-                            verse_start = verse
-                            verse_end = verse
-                    for chapter in range(chapter_start, chapter_end + 1):
-                        chapter_content_list = []
-                        if chapter == chapter_start:
-                            chapter_verse_start = verse_start
-                        else:
-                            chapter_verse_start = 1
-                        if chapter == chapter_end:
-                            chapter_verse_end = verse_end
-                        else:
-                            chapter_verse_end = len(book_chapter_list[chapter - 1])
-                        for verse in range(chapter_verse_start, chapter_verse_end + 1):
-                            if verse - 1 in range(len(book_chapter_list[chapter - 1])):
-                                chapter_content_list.append('({}) {}'.format(verse, book_chapter_list[chapter - 1][verse - 1]))
-                        output_str_list.append('<p>{}</p>'.format(' '.join(chapter_content_list)))
-                    if 'and' in chapter_verse_str_no_brackets:
-                        chapter = -1
-                output_str = '\n\n'.join(output_str_list)
-                output_list.append(output_str)
+            if book_no_whitespace in BIBLE_BOOKNAME_NWS_NIV_MAP.keys():
+                niv_bookname = BIBLE_BOOKNAME_NWS_NIV_MAP[book_no_whitespace]
+                niv_url_bookname = niv_bookname.replace(' ', '+')
+                niv_url = 'https://www.biblegateway.com/passage/?search={}+{}&version=NIV/'.format(niv_url_bookname, chapter_verse_str_clean)
+                esv_bookname = BIBLE_BOOKNAME_NWS_ESV_MAP[book_no_whitespace]
+                esv_url_bookname = esv_bookname.replace(' ', '+')
+                esv_url = 'https://www.esv.org/verses/{}+{}/'.format(esv_url_bookname, chapter_verse_str_clean)
+                output_list.append('<p>Text: <a href="{}">New International Version (NIV)</a> . <a href="{}">English Standard Version (ESV)</a></p>'.format(niv_url, esv_url))
             else:
                 output_str = '<p>This reading is not supported..</p>'
                 output_list.append(output_str)
